@@ -9,6 +9,7 @@ import {
   uiBaseToLots,
   uiPriceToLots,
   uiQuoteToLots,
+  Market,
 } from "@openbook-dex/openbook-v2";
 import { MintUtils } from "./mint_utils";
 
@@ -25,35 +26,36 @@ async function main() {
   const marketPublicKey = new PublicKey(
     "CwHc9CZ9UCZFayz4eBekuhhKsHapLDPYfX4tGFJrnTRt"
   );
-  const market = await client.deserializeMarketAccount(marketPublicKey);
+  const market = await Market.load(client, marketPublicKey);
   if (!market) {
     throw "No market";
   }
 
   let mintUtils = new MintUtils(provider.connection, authority);
   const userQuoteAcc = await mintUtils.getOrCreateTokenAccount(
-    market?.quoteMint,
+    market?.account.quoteMint,
     authority,
     client.walletPk
   );
   const userBaseAcc = await mintUtils.getOrCreateTokenAccount(
-    market?.baseMint,
+    market?.account.baseMint,
     authority,
     client.walletPk
   );
-  mintUtils.mintTo(market?.quoteMint, userQuoteAcc.address);
-  mintUtils.mintTo(market?.baseMint, userBaseAcc.address);
+  mintUtils.mintTo(market?.account.quoteMint, userQuoteAcc.address);
+  mintUtils.mintTo(market?.account.baseMint, userBaseAcc.address);
 
+  // @ts-ignore
   let side = Side.Bid;
   let placeOrder = { limit: {} };
   let selfTradeBehavior = { decrementTake: {} };
 
   // Buy Sol at $20 with $100. Remember SBF was buying all at $3
   // We set the maxBaseLots to maximum or big number to not restrict
-  const priceLots = uiPriceToLots(market, 20);
-  const maxQuoteLotsIncludingFees = uiQuoteToLots(market, 100);
+  const priceLots = uiPriceToLots(market?.account, 20);
+  const maxQuoteLotsIncludingFees = uiQuoteToLots(market?.account, 100);
 
-  const maxBaseLots = uiBaseToLots(market, 1000000);
+  const maxBaseLots = uiBaseToLots(market?.account, 1000000);
 
   let args: PlaceOrderArgs = {
     side,
@@ -70,10 +72,11 @@ async function main() {
   const [ix, signers] = await client.placeOrderIx(
     openOrdersPublicKey,
     marketPublicKey,
-    market,
+    market.account,
     userQuoteAcc.address,
     null,
     args,
+    // @ts-ignore
     []
   );
   const tx = await client.sendAndConfirmTransaction([ix], signers);
@@ -81,4 +84,4 @@ async function main() {
   console.log("Placed order ", tx);
 }
 
-main();
+main().catch((err) => console.error(err));

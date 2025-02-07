@@ -17,13 +17,15 @@ import {
 import { createAccount } from "./solana_utils";
 import { MintUtils } from "./mint_utils";
 import { OpenBookV2Client } from "@openbook-dex/openbook-v2";
-import { RPC, authority, connection, programId } from "./utils";
+import { RPC, authority, connection, getFeePayer, programId } from "./utils";
 
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function main() {
+  const authority = getFeePayer();
+
   const wallet = new Wallet(authority);
   const provider = new AnchorProvider(new Connection(RPC), wallet, {
     commitment: "confirmed",
@@ -50,11 +52,11 @@ async function main() {
   // const quoteMint = new PublicKey("BfvE9DViu6SkSMBz4TYVftd5DNp7bafemMujXBdVwFYN");
 
   // Mainnet acounts for SOL-USDC
-  // WSOL
-  const baseMint = new PublicKey("METADDFL6wWMWEoKTFJwcThTbUmtarRJZjRpzUvkxhr");
-  // USDC
+  // FUND1
+  const baseMint = new PublicKey("58UY3NypnaRFwjJc8MgEVvm6eZwYw1PNVtq4Y1y7Vyix");
+  // NNGBP
   const quoteMint = new PublicKey(
-    "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+    "Ewbb4y8DD7JBjj5U4oc45ChyAsw7XtiFmuKidpd5E7gh"
   );
 
   // // Sol/USD
@@ -135,7 +137,7 @@ async function main() {
   //   .signers([adminKp])
   //   .rpc();
 
-  const name = "SOL-USDC";
+  const name = "NNFUND-1/NNBGP 3";
 
   const [ixs, signers] = await client.createMarketIx(
     authority.publicKey,
@@ -143,9 +145,9 @@ async function main() {
     quoteMint,
     baseMint,
     new BN(1),
-    new BN(1000000),
-    new BN(1000),
-    new BN(1000),
+    new BN(10000),
+    new BN(0),
+    new BN(0),
     new BN(0),
     oracleAId,
     oracleBId,
@@ -165,4 +167,4 @@ async function main() {
   );
 }
 
-main();
+main().catch((err) => console.error(err));

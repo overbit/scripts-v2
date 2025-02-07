@@ -25,4 +25,4 @@ async function main() {
   });
   console.log("close open orders acc", tx);
 }
-main();
+main().catch((err) => console.error(err));

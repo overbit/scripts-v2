@@ -6,9 +6,8 @@ import {
   OpenBookV2Client,
   PlaceOrderArgs,
   Side,
-  OrderType,
-  SelfTradeBehavior,
   PlaceMultipleOrdersArgs,
+  Market,
 } from "@openbook-dex/openbook-v2";
 import { MintUtils } from "./mint_utils";
 
@@ -32,7 +31,7 @@ async function main() {
   }
   const openOrdersPublicKey = ooa[0];
 
-  const market = await client.deserializeMarketAccount(marketPublicKey);
+  const market = await Market.load(client, marketPublicKey);
   if (!market) {
     throw "No market";
   }
@@ -40,13 +39,13 @@ async function main() {
   let mintUtils = new MintUtils(provider.connection, authority);
 
   const userQuoteAcc = await mintUtils.getOrCreateTokenAccount(
-    market?.quoteMint,
+    market?.account.quoteMint,
     authority,
     client.walletPk
   );
 
   const userBaseAcc = await mintUtils.getOrCreateTokenAccount(
-    market?.baseMint,
+    market?.account.baseMint,
     authority,
     client.walletPk
   );
@@ -69,17 +68,20 @@ async function main() {
     });
   }
 
+  let ImmediateOrCancel = { decrementTake: {} };
+
   const [ix, signers] = await client.cancelAllAndPlaceOrdersIx(
     openOrdersPublicKey,
     marketPublicKey,
-    market,
+    market.account,
     userBaseAcc.address,
     userQuoteAcc.address,
     null,
-    OrderType.ImmediateOrCancel,
+    ImmediateOrCancel,
     bids,
     asks
   );
+
   const tx = await client.sendAndConfirmTransaction([ix], {
     additionalSigners: [signers],
   });
@@ -87,4 +89,4 @@ async function main() {
   console.log("Cancel and place order ", tx);
 }
 
-main();
+main().catch((err) => console.error(err));

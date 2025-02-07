@@ -1,13 +1,11 @@
 import { AnchorProvider, BN, Wallet } from "@coral-xyz/anchor";
 import { PublicKey, Connection } from "@solana/web3.js";
 import { authority } from "./utils";
-import { RPC, programId } from "./utils";
+import { RPC } from "./utils";
 import {
+  Market,
   OpenBookV2Client,
-  PlaceOrderArgs,
-  Side,
 } from "@openbook-dex/openbook-v2";
-import { MintUtils } from "./mint_utils";
 
 async function main() {
   const wallet = new Wallet(authority);
@@ -19,25 +17,25 @@ async function main() {
   const marketPublicKey = new PublicKey(
     "BLr5UmvkfoVC4yth5CX2jBT5X75Z61gkLPMbJRNxiRqa"
   );
-  const market = await client.deserializeMarketAccount(marketPublicKey);
+  const market = await Market.load(client, marketPublicKey);
   if (!market) {
     throw "No market";
   }
 
-  const eventHeap = await client.deserializeEventHeapAccount(market.eventHeap);
+  const eventHeap = market.eventHeap?.account;
   if (!eventHeap) {
     throw "No event heap";
   }
   console.log("event heap length", eventHeap.header.count);
 
   if (eventHeap.header.count > 0) {
-    const accounts = await client.getAccountsToConsume(market);
+    const accounts = await client.getAccountsToConsume(market.account);
     if (accounts) {
       console.log("accounts lenght", accounts.length);
 
       const ix = await client.consumeEventsIx(
         marketPublicKey,
-        market,
+        market.account,
         new BN(8),
         accounts
       );
@@ -52,7 +50,7 @@ async function main() {
 
   const [ix, signers] = await client.closeMarketIx(
     marketPublicKey,
-    market,
+    market.account,
     wallet.publicKey,
     wallet.payer
   );

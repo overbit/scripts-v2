@@ -1,19 +1,21 @@
 {
-  "name": "yolodolo",
+  "name": "the-holy-book-services",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "main": "ts-node main.ts",
+    "createMarket": "ts-node createMarket.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@coral-xyz/anchor": "^0.28.1-beta.1",
-    "@openbook-dex/openbook-v2": "^0.1.5",
-    "@solana/spl-token": "^0.3.8",
-    "@solana/web3.js": "^1.78.3"
+    "@coral-xyz/anchor": "^0.29.0",
+    "@openbook-dex/openbook-v2": "^0.2.10",
+    "@solana/spl-token": "^0.4.9",
+    "@solana/web3.js": "^1.98.0",
+    "bs58": "^6.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.5.0",

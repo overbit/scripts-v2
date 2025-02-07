@@ -7,6 +7,7 @@ import {
   IDL,
   type OpenbookV2,
   findAllMarkets,
+  Market
 } from "@openbook-dex/openbook-v2";
 
 async function main() {
@@ -17,9 +18,12 @@ async function main() {
       commitment: "confirmed",
     });
 
-  let markets = await findAllMarkets(connection, programId,provider);
+    const client = new OpenBookV2Client(provider, programId);
 
-  console.log(markets);
+  let market = await Market.load(client, new PublicKey("F9cUzvKFyLUneYWfSx8p638jMNWdKQY1RXrxRmDupdwV") );
+  await market.loadOrderBook();
+
+  console.log(market);
 }
 
-main().catch((err) => console.error(err));
+main();

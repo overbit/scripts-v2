@@ -24,6 +24,7 @@ async function main() {
   );
 
   const tx = await client.createOpenOrders(wallet.payer, market, "name");
-  console.log("created open orders acc", tx);
+  console.log("created open orders acc", tx.toBase58());
 }
-main();
+
+main().catch((err) => console.error(err));

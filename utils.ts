@@ -13,7 +13,7 @@ import {
   SystemProgram,
   Transaction,
 } from "@solana/web3.js";
-import { AnchorProvider, BN, Program, getProvider } from "@coral-xyz/anchor";
+import { AnchorProvider, BN, Program, Provider, getProvider } from "@coral-xyz/anchor";
 import * as os from "os";
 import { createAccount } from "./solana_utils";
 import { MintUtils } from "./mint_utils";
@@ -33,7 +33,7 @@ export const connection = new Connection(RPC, {
   commitment: "finalized",
   confirmTransactionInitialTimeout: 30000,
 });
-export const program = new Program<OpenbookV2>(IDL, programId, getProvider());
+export const program = new Program<OpenbookV2>(IDL, programId, {} as Provider);
 
 export function getKeypairFromFile(filePath: String): Keypair {
   return Keypair.fromSecretKey(

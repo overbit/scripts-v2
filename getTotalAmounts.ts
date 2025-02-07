@@ -8,6 +8,7 @@ import {
   PlaceOrderArgs,
   Side,
   IDL,
+  Market,
 } from "@openbook-dex/openbook-v2";
 import { toUiDecimals } from "@openbook-dex/openbook-v2";
 import { quoteLotsToUi } from "@openbook-dex/openbook-v2";
@@ -24,7 +25,7 @@ async function main() {
   );
   const owner = new PublicKey("J9zjCmmGBfv6wDSwmRW43vVJ6vooCftXjQYtc7uhETdr");
 
-  const market = await client.deserializeMarketAccount(marketPubkey);
+  const market = await Market.load(client, marketPubkey);
 
   if (market === null) {
     throw "No market";
@@ -36,8 +37,8 @@ async function main() {
     const openOrder = await client.deserializeOpenOrderAccount(openOrderPubkey);
 
     if (openOrder) {
-      if (openOrder.version != 1){
-        throw "using an old open orders account, please close it"
+      if (openOrder.version != 1) {
+        throw "using an old open orders account, please close it";
       }
       console.log("bidsQuoteLots", openOrder.position.bidsQuoteLots.toNumber());
       console.log("asksBaseLots", openOrder.position.asksBaseLots.toNumber());
@@ -52,4 +53,4 @@ function priceData(key: BN) {
   return shiftedValue.toNumber(); // Convert BN to a regular number
 }
 
-main();
+main().catch((err) => console.error(err));

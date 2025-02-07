@@ -6,8 +6,8 @@ import {
   OpenBookV2Client,
   PlaceOrderArgs,
   Side,
-  OrderType,
   SelfTradeBehavior,
+  Market,
 } from "@openbook-dex/openbook-v2";
 import { MintUtils } from "./mint_utils";
 
@@ -22,7 +22,7 @@ async function main() {
     "2Hj72s8LRTs532YBDSU7R95DgHw2bSSN5nmwzeYwgJr3"
   );
 
-  const market = await client.deserializeMarketAccount(marketPublicKey);
+  const market = await Market.load(client, marketPublicKey);
   if (!market) {
     throw "No market";
   }
@@ -30,34 +30,37 @@ async function main() {
   let mintUtils = new MintUtils(provider.connection, authority);
 
   const userQuoteAcc = await mintUtils.getOrCreateTokenAccount(
-    market?.quoteMint,
+    market?.account.quoteMint,
     authority,
     client.walletPk
   );
 
   const userBaseAcc = await mintUtils.getOrCreateTokenAccount(
-    market?.baseMint,
+    market?.account.baseMint,
     authority,
     client.walletPk
   );
-  mintUtils.mintTo(market?.quoteMint, userQuoteAcc.address);
-  mintUtils.mintTo(market?.baseMint, userBaseAcc.address);
+  mintUtils.mintTo(market?.account.quoteMint, userQuoteAcc.address);
+  mintUtils.mintTo(market?.account.baseMint, userBaseAcc.address);
+  let selfTradeBehavior = { decrementTake: {} };
+  let placeOrder = { limit: {} };
 
   let args: PlaceOrderArgs = {
+    // @ts-ignore
     side: Side.Bid,
     priceLots: new BN(1000 + 1000),
     maxBaseLots: new BN(1000),
     maxQuoteLotsIncludingFees: new BN(100000000),
     clientOrderId: new BN(105),
-    orderType: OrderType.Market,
+    placeOrder,
     expiryTimestamp: new BN(0),
-    selfTradeBehavior: SelfTradeBehavior.DecrementTake,
+    selfTradeBehavior,
     limit: 255,
   };
   let remainings = new Array<PublicKey>();
   const [ix, signers] = await client.placeTakeOrderIx(
     marketPublicKey,
-    market,
+    market.account,
     userBaseAcc.address,
     userQuoteAcc.address,
     null,
@@ -70,4 +73,4 @@ async function main() {
   console.log("Take order ", tx);
 }
 
-main();
+main().catch((err) => console.error(err));

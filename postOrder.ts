@@ -6,6 +6,7 @@ import {
   OpenBookV2Client,
   PlaceOrderArgs,
   Side,
+  Market,
 } from "@openbook-dex/openbook-v2";
 import { MintUtils } from "./mint_utils";
 
@@ -22,27 +23,28 @@ async function main() {
   const marketPublicKey = new PublicKey(
     "CwHc9CZ9UCZFayz4eBekuhhKsHapLDPYfX4tGFJrnTRt"
   );
-  const market = await client.deserializeMarketAccount(marketPublicKey);
+  const market = await Market.load(client, marketPublicKey);
   if (!market) {
     throw "No market";
   }
 
   let mintUtils = new MintUtils(provider.connection, authority);
   const userQuoteAcc = await mintUtils.getOrCreateTokenAccount(
-    market?.quoteMint,
+    market?.account.quoteMint,
     authority,
     client.walletPk
   );
   const userBaseAcc = await mintUtils.getOrCreateTokenAccount(
-    market?.baseMint,
+    market?.account.baseMint,
     authority,
     client.walletPk
   );
-  mintUtils.mintTo(market?.quoteMint, userQuoteAcc.address);
-  mintUtils.mintTo(market?.baseMint, userBaseAcc.address);
+  mintUtils.mintTo(market?.account.quoteMint, userQuoteAcc.address);
+  mintUtils.mintTo(market?.account.baseMint, userBaseAcc.address);
 
   const nbOrders: number = 10;
   for (let i = 0; i < nbOrders; ++i) {
+    // @ts-ignore
     let side = Side.Bid;
     let placeOrder = { limit: {} };
     let selfTradeBehavior = { decrementTake: {} };
@@ -62,10 +64,11 @@ async function main() {
     const [ix, signers] = await client.placeOrderIx(
       openOrdersPublicKey,
       marketPublicKey,
-      market,
+      market.account,
       userQuoteAcc.address,
       null,
       args,
+      // @ts-ignore
       []
     );
     const tx = await client.sendAndConfirmTransaction([ix], {
@@ -75,6 +78,7 @@ async function main() {
   }
 
   for (let i = 0; i < nbOrders; ++i) {
+    // @ts-ignore
     let side = Side.Ask;
     let placeOrder = { limit: {} };
     let selfTradeBehavior = { decrementTake: {} };
@@ -90,15 +94,17 @@ async function main() {
       selfTradeBehavior: selfTradeBehavior,
       limit: 255,
     };
+    // @ts-ignore
     let remainings = new Array<PublicKey>();
 
     const [ix, signers] = await client.placeOrderIx(
       openOrdersPublicKey,
       marketPublicKey,
-      market,
+      market.account,
       userBaseAcc.address,
       null,
       args,
+      // @ts-ignore
       remainings
     );
     const tx = await client.sendAndConfirmTransaction([ix], {
@@ -108,4 +114,4 @@ async function main() {
   }
 }
 
-main();
+main().catch((err) => console.error(err));

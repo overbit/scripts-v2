@@ -1,10 +1,5 @@
 import { PublicKey, Connection } from "@solana/web3.js";
-import {
-  AnchorProvider,
-  BN,
-  Wallet,
-  BorshCoder,
-} from "@coral-xyz/anchor";
+import { AnchorProvider, BN, Wallet, BorshCoder } from "@coral-xyz/anchor";
 import { RPC, programId } from "./utils";
 
 import { authority } from "./utils";
@@ -49,4 +44,4 @@ function extractEventData(input: string): string | null {
   return null;
 }
 
-main();
+main().catch((err) => console.error(err));
